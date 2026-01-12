@@ -103,3 +103,26 @@ exports.delete = async (req, res) => {
     return res.status(500).json({ message: 'Server error: ' + error.message });
   }
 };
+
+// Deactivate face (soft delete)
+exports.deactivate = async (req, res) => {
+  try {
+    const { faceId } = req.params;
+    const userId = req.userId;
+
+    const face = await RegisteredFace.findOne({
+      where: { id: faceId, userId, isActive: true }
+    });
+
+    if (!face) {
+      return res.status(404).json({ message: 'Face not found' });
+    }
+
+    face.isActive = false;
+    await face.save();
+
+    return res.status(200).json({ message: 'Face deactivated successfully' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+};
