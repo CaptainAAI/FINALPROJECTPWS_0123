@@ -42,3 +42,12 @@ exports.deleteApiKey = async (req, res) => {
     res.status(200).json({ message: 'API key deleted' });
   } catch (err) { res.status(500).json({ message: 'Server error: ' + err.message }); }
 };
+
+exports.getFaces = async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const where = userId ? { userId } : {};
+    const faces = await RegisteredFace.findAll({ where, order: [['createdAt','DESC']] });
+    res.status(200).json({ faces });
+  } catch (err) { res.status(500).json({ message: 'Server error: ' + err.message }); }
+};
