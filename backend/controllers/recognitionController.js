@@ -143,3 +143,20 @@ exports.registerFace = async (req, res) => {
     });
   }
 };
+
+// Get all registered faces
+exports.getRegisteredFaces = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const faces = await RegisteredFace.findAll({
+      where: { userId, isActive: true },
+      attributes: { exclude: ['embedding', 'imagePath'] },
+      order: [['createdAt', 'DESC']]
+    });
+
+    return res.status(200).json({ faces });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+};
