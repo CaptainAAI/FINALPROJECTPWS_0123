@@ -20,3 +20,14 @@ exports.getApiKeys = async (req, res) => {
     res.status(200).json({ keys });
   } catch (err) { res.status(500).json({ message: 'Server error: ' + err.message }); }
 };
+
+exports.revokeApiKey = async (req, res) => {
+  try {
+    const { keyId } = req.params;
+    const key = await ApiKey.findByPk(keyId);
+    if (!key) return res.status(404).json({ message: 'API key not found' });
+    key.isActive = false;
+    await key.save();
+    res.status(200).json({ message: 'API key revoked' });
+  } catch (err) { res.status(500).json({ message: 'Server error: ' + err.message }); }
+};
