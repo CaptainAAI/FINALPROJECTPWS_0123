@@ -95,3 +95,51 @@ const findBestMatch = (uploadedEmbedding, faces, threshold) => {
   });
   return { bestMatch, totalMatches };
 };
+
+// Register user's face
+exports.registerFace = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { name } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    // Extract face embedding
+    let result;
+    try {
+      result = await extractEmbedding(req.file.path);
+    } catch (e) {
+      safeUnlink(req.file?.path);
+      return res.status(400).json({ message: e.message });
+    }
+
+    // Store face embedding in database
+    const registeredFace = await RegisteredFace.create({
+      userId,
+      name: name || 'Registered Face',
+      embedding: result.embedding,
+      imagePath: req.file.path,
+      confidence: result.confidence
+    });
+
+    return res.status(201).json({
+      message: 'Face registered successfully',
+      face: {
+        id: registeredFace.id,
+        name: registeredFace.name,
+        confidence: registeredFace.confidence,
+        createdAt: registeredFace.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Face registration error:', error);
+    
+    if (req.file) safeUnlink(req.file.path);
+
+    return res.status(500).json({ 
+      message: 'Face registration error: ' + error.message 
+    });
+  }
+};
