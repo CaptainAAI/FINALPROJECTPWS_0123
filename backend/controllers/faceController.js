@@ -38,3 +38,39 @@ exports.getOne = async (req, res) => {
     return res.status(500).json({ message: 'Server error: ' + error.message });
   }
 };
+
+// Update registered face name
+exports.update = async (req, res) => {
+  try {
+    const { faceId } = req.params;
+    const { name } = req.body;
+    const userId = req.userId;
+
+    if (!name) {
+      return res.status(400).json({ message: 'Name is required' });
+    }
+
+    const face = await RegisteredFace.findOne({
+      where: { id: faceId, userId, isActive: true }
+    });
+
+    if (!face) {
+      return res.status(404).json({ message: 'Face not found' });
+    }
+
+    face.name = name;
+    await face.save();
+
+    return res.status(200).json({
+      message: 'Face updated successfully',
+      face: {
+        id: face.id,
+        name: face.name,
+        createdAt: face.createdAt,
+        updatedAt: face.updatedAt
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+};
