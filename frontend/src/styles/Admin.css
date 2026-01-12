@@ -1,0 +1,11 @@
+.admin { display: flex; flex-direction: column; gap: 16px; }
+.admin-toolbar { display: flex; justify-content: space-between; align-items: center; }
+.admin-search { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; min-width: 220px; }
+.card { background: white; padding: 16px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.admin-table th, .admin-table td { padding: 10px 12px; border-bottom: 1px solid #eee; text-align: left; }
+.admin-table thead th { background: #f7f7fb; color: #333; position: sticky; top: 0; z-index: 1; }
+.admin-table tbody tr:hover { background: #fafafa; }
+.admin-table button { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; background: #667eea; color: #fff; margin-right: 6px; }
+.admin-table button.danger { background: #e11d48; }
+.monospace { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
