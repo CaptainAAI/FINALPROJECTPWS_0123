@@ -4,7 +4,7 @@ import './App.css';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Register from './components/Register';
-import { API_BASE_URL } from '../../public/config';
+import { API_BASE_URL } from './config';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
