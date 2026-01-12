@@ -94,3 +94,21 @@ exports.activateApiKey = async (req, res) => {
     return res.status(500).json({ message: 'Server error: ' + error.message });
   }
 };
+
+// Get API key details (including full key for copy purposes)
+exports.getApiKeyDetails = async (req, res) => {
+  try {
+    const { keyId } = req.params;
+    const userId = req.userId;
+
+    const apiKey = await ApiKey.findOne({ where: { id: keyId, userId } });
+
+    if (!apiKey) {
+      return res.status(404).json({ message: 'API key not found' });
+    }
+
+    return res.status(200).json({ apiKey });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+};
