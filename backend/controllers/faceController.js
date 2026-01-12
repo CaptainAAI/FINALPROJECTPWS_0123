@@ -74,3 +74,32 @@ exports.update = async (req, res) => {
     return res.status(500).json({ message: 'Server error: ' + error.message });
   }
 };
+
+// Delete registered face
+exports.delete = async (req, res) => {
+  try {
+    const { faceId } = req.params;
+    const userId = req.userId;
+
+    const face = await RegisteredFace.findOne({
+      where: { id: faceId, userId }
+    });
+
+    if (!face) {
+      return res.status(404).json({ message: 'Face not found' });
+    }
+
+    // Delete image file if exists
+    if (face.imagePath && fs.existsSync(face.imagePath)) {
+      fs.unlink(face.imagePath, (err) => {
+        if (err) console.error('Error deleting file:', err);
+      });
+    }
+
+    await face.destroy();
+
+    return res.status(200).json({ message: 'Face deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+};
