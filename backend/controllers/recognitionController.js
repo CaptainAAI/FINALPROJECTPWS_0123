@@ -160,3 +160,84 @@ exports.getRegisteredFaces = async (req, res) => {
     return res.status(500).json({ message: 'Server error: ' + error.message });
   }
 };
+
+
+// Verify face against specific registered face
+exports.verifyFace = async (req, res) => {
+  try {
+    const startTime = Date.now();
+    const userId = req.userId;
+    const apiKeyId = req.apiKey.id;
+    const { faceId, threshold = 0.6 } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    if (!faceId) {
+      return res.status(400).json({ message: 'Face ID is required' });
+    }
+
+    // Get registered face
+    const registeredFace = await RegisteredFace.findOne({
+      where: { id: faceId, userId, isActive: true }
+    });
+
+    if (!registeredFace) {
+      return res.status(404).json({ message: 'Registered face not found' });
+    }
+
+    // Extract embedding from uploaded image
+    let uploadedEmbedding;
+    try {
+      const r = await extractEmbedding(req.file.path);
+      uploadedEmbedding = r.embedding;
+    } catch (e) {
+      safeUnlink(req.file?.path);
+      return res.status(400).json({ message: e.message });
+    }
+
+    // Calculate similarity
+    const similarity = calculateSimilarity(
+      uploadedEmbedding,
+      registeredFace.embedding
+    );
+
+    const isMatch = similarity >= threshold;
+
+    // Log verification
+    const log = await RecognitionLog.create({
+      apiKeyId,
+      userId,
+      status: isMatch ? 'success' : 'failed',
+      matchedFaces: isMatch ? 1 : 0,
+      imagePath: req.file.path,
+      matchedFaceId: isMatch ? registeredFace.id : null,
+      matchedFaceName: isMatch ? registeredFace.name : null,
+      duration: Date.now() - startTime
+    });
+
+    // Clean up uploaded file
+    safeUnlink(req.file?.path);
+
+    return res.status(200).json({
+      message: isMatch ? 'Face verified successfully' : 'Face verification failed',
+      result: {
+        verified: isMatch,
+        similarity: parseFloat(similarity.toFixed(4)),
+        threshold: threshold,
+        registeredFaceName: registeredFace.name,
+        duration: log.duration,
+        timestamp: log.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Face verification error:', error);
+
+    if (req.file) safeUnlink(req.file.path);
+
+    return res.status(500).json({ 
+      message: 'Face verification error: ' + error.message 
+    });
+  }
+};
