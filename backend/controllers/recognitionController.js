@@ -46,3 +46,18 @@ const callPythonService = (command, args) => {
     });
   });
 };
+
+// Helper function to calculate similarity between two embeddings
+const calculateSimilarity = (emb1, emb2) => {
+  let dotProduct = 0;
+  let norm1 = 0;
+  let norm2 = 0;
+  
+  for (let i = 0; i < emb1.length; i++) {
+    dotProduct += emb1[i] * emb2[i];
+    norm1 += emb1[i] * emb1[i];
+    norm2 += emb2[i] * emb2[i];
+  }
+  
+  return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
+};
