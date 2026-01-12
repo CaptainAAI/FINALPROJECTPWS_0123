@@ -61,3 +61,27 @@ exports.deleteFace = async (req, res) => {
     res.status(200).json({ message: 'Face deleted' });
   } catch (err) { res.status(500).json({ message: 'Server error: ' + err.message }); }
 };
+
+exports.getLogs = async (req, res) => {
+  try {
+    const { limit = 50, skip = 0, userId } = req.query;
+    const where = userId ? { userId } : {};
+    const logs = await RecognitionLog.findAll({ where, order: [['createdAt','DESC']], limit: parseInt(limit), offset: parseInt(skip) });
+    const total = await RecognitionLog.count({ where });
+
+    // Attach usernames for convenience (without defining associations)
+    const userIds = [...new Set(logs.map(l => l.userId))];
+    let usersMap = {};
+    if (userIds.length > 0) {
+      const users = await User.findAll({ where: { id: userIds }, attributes: ['id','username','fullName','email'] });
+      users.forEach(u => { usersMap[u.id] = u; });
+    }
+    const enriched = logs.map(l => {
+      const json = l.toJSON();
+      const u = usersMap[l.userId];
+      return { ...json, username: u ? u.username : null, user: u ? u : null };
+    });
+
+    res.status(200).json({ logs: enriched, total });
+  } catch (err) { res.status(500).json({ message: 'Server error: ' + err.message }); }
+};
