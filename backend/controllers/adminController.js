@@ -51,3 +51,13 @@ exports.getFaces = async (req, res) => {
     res.status(200).json({ faces });
   } catch (err) { res.status(500).json({ message: 'Server error: ' + err.message }); }
 };
+
+exports.deleteFace = async (req, res) => {
+  try {
+    const { faceId } = req.params;
+    const face = await RegisteredFace.findByPk(faceId);
+    if (!face) return res.status(404).json({ message: 'Face not found' });
+    await face.destroy();
+    res.status(200).json({ message: 'Face deleted' });
+  } catch (err) { res.status(500).json({ message: 'Server error: ' + err.message }); }
+};
