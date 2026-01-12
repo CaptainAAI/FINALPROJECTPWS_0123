@@ -12,3 +12,11 @@ exports.getUsers = async (req, res) => {
     res.status(500).json({ message: 'Server error: ' + err.message });
   }
 };
+
+
+exports.getApiKeys = async (req, res) => {
+  try {
+    const keys = await ApiKey.findAll({ order: [['createdAt','DESC']] });
+    res.status(200).json({ keys });
+  } catch (err) { res.status(500).json({ message: 'Server error: ' + err.message }); }
+};
