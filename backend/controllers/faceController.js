@@ -17,3 +17,24 @@ exports.getAll = async (req, res) => {
     return res.status(500).json({ message: 'Server error: ' + error.message });
   }
 };
+
+// Get single registered face
+exports.getOne = async (req, res) => {
+  try {
+    const { faceId } = req.params;
+    const userId = req.userId;
+
+    const face = await RegisteredFace.findOne({
+      where: { id: faceId, userId, isActive: true },
+      attributes: { exclude: ['embedding'] }
+    });
+
+    if (!face) {
+      return res.status(404).json({ message: 'Face not found' });
+    }
+
+    return res.status(200).json({ face });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+};
