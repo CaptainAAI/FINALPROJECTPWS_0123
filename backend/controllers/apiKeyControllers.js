@@ -112,3 +112,24 @@ exports.getApiKeyDetails = async (req, res) => {
     return res.status(500).json({ message: 'Server error: ' + error.message });
   }
 };
+
+// Delete API key
+exports.deleteApiKey = async (req, res) => {
+  try {
+    const { keyId } = req.params;
+    const userId = req.userId;
+
+    // Clean up dependent logs first to avoid FK constraint errors
+    await RecognitionLog.destroy({ where: { apiKeyId: keyId, userId } });
+
+    const result = await ApiKey.destroy({ where: { id: keyId, userId } });
+
+    if (result === 0) {
+      return res.status(404).json({ message: 'API key not found' });
+    }
+
+    return res.status(200).json({ message: 'API key deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+};
