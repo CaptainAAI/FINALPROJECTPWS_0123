@@ -61,3 +61,37 @@ const calculateSimilarity = (emb1, emb2) => {
   
   return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
 };
+
+// Small helpers for reuse
+const safeUnlink = (filePath) => {
+  try {
+    if (filePath && fs.existsSync(filePath)) {
+      fs.unlink(filePath, () => {});
+    }
+  } catch (_) {}
+};
+
+const extractEmbedding = async (imagePath) => {
+  const result = await callPythonService('extract', [imagePath]);
+  if (result.error) throw new Error(result.error);
+  return { embedding: result.embedding, confidence: result.confidence };
+};
+
+const findBestMatch = (uploadedEmbedding, faces, threshold) => {
+  let bestMatch = null;
+  let totalMatches = 0;
+  faces.forEach((face) => {
+    const similarity = calculateSimilarity(uploadedEmbedding, face.embedding);
+    if (similarity >= threshold) {
+      totalMatches += 1;
+      if (!bestMatch || similarity > bestMatch.similarity) {
+        bestMatch = {
+          faceId: face.id,
+          faceName: face.name,
+          similarity: parseFloat(similarity.toFixed(4))
+        };
+      }
+    }
+  });
+  return { bestMatch, totalMatches };
+};
