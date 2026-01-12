@@ -36,3 +36,19 @@ exports.generateApiKey = async (req, res) => {
     return res.status(500).json({ message: 'Server error: ' + error.message });
   }
 };
+
+// Get all API keys for user
+exports.getApiKeys = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const apiKeys = await ApiKey.findAll({ 
+      where: { userId },
+      attributes: { exclude: ['key'] }
+    });
+
+    return res.status(200).json({ apiKeys });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+};
