@@ -126,3 +126,26 @@ exports.deactivate = async (req, res) => {
     return res.status(500).json({ message: 'Server error: ' + error.message });
   }
 };
+
+// Reactivate face
+exports.reactivate = async (req, res) => {
+  try {
+    const { faceId } = req.params;
+    const userId = req.userId;
+
+    const face = await RegisteredFace.findOne({
+      where: { id: faceId, userId, isActive: false }
+    });
+
+    if (!face) {
+      return res.status(404).json({ message: 'Face not found' });
+    }
+
+    face.isActive = true;
+    await face.save();
+
+    return res.status(200).json({ message: 'Face reactivated successfully' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error: ' + error.message });
+  }
+};
