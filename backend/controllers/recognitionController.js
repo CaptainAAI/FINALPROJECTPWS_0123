@@ -241,3 +241,82 @@ exports.verifyFace = async (req, res) => {
     });
   }
 };
+
+// Detect and identify in one step (API key)
+exports.detectFaces = async (req, res) => {
+  try {
+    const startTime = Date.now();
+    const userId = req.userId;
+    const apiKeyId = req.apiKey.id;
+    const threshold = parseFloat(req.body?.threshold) || 0.6;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    // Extract a face embedding from the uploaded image
+    let uploadedEmbedding;
+    try {
+      const r = await extractEmbedding(req.file.path);
+      uploadedEmbedding = r.embedding;
+    } catch (e) {
+      await RecognitionLog.create({
+        apiKeyId,
+        userId,
+        status: 'failed',
+        errorMessage: e.message,
+        duration: Date.now() - startTime
+      });
+      return res.status(400).json({ message: e.message });
+    }
+
+    // Fetch registered faces for this user
+    const registeredFaces = await RegisteredFace.findAll({
+      where: { userId, isActive: true }
+    });
+
+    const { bestMatch, totalMatches } = registeredFaces.length
+      ? findBestMatch(uploadedEmbedding, registeredFaces, threshold)
+      : { bestMatch: null, totalMatches: 0 };
+
+    const matched = Boolean(bestMatch);
+
+    const log = await RecognitionLog.create({
+      apiKeyId,
+      userId,
+      status: matched ? 'success' : 'failed',
+      matchedFaces: totalMatches,
+      imagePath: req.file.path,
+      matchedFaceId: matched ? bestMatch.faceId : null,
+      matchedFaceName: matched ? bestMatch.faceName : null,
+      duration: Date.now() - startTime
+    });
+
+    // Clean up uploaded file
+    safeUnlink(req.file?.path);
+
+    return res.status(200).json({
+      message: matched ? 'Detected and recognized' : (registeredFaces.length === 0 ? 'Detected but no registered faces' : 'Detected but unknown'),
+      result: {
+        matched,
+        bestMatch,
+        threshold,
+        totalMatches,
+        duration: log.duration,
+        timestamp: log.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Face detection error:', error);
+
+    await RecognitionLog.create({
+      apiKeyId: req.apiKey.id,
+      userId: req.userId,
+      status: 'error',
+      errorMessage: error.message,
+      duration: Date.now() - (req.startTime || Date.now())
+    });
+
+    return res.status(500).json({ message: 'Face detection error: ' + error.message });
+  }
+};
