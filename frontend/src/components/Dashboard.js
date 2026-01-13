@@ -3,6 +3,7 @@ import '../styles/Dashboard.css';
 import ApiKeyManager from './ApiKeyManager';
 import AdminDashboard from './AdminDashboard';
 import RecognitionLogs from './RecognitionLogs';
+import ApiDocumentation from './ApiDocumentation';
 
 function Dashboard({ user, token, apiBaseUrl, onLogout }) {
   const [activeTab, setActiveTab] = useState('apikeys');
@@ -34,6 +35,12 @@ function Dashboard({ user, token, apiBaseUrl, onLogout }) {
         >
           Recognition Logs
         </button>
+        <button 
+          className={`nav-tab ${activeTab === 'documentation' ? 'active' : ''}`}
+          onClick={() => setActiveTab('documentation')}
+        >
+          API Documentation
+        </button>
         {user?.role === 'admin' && (
           <button 
             className={`nav-tab ${activeTab === 'admin' ? 'active' : ''}`}
@@ -50,6 +57,9 @@ function Dashboard({ user, token, apiBaseUrl, onLogout }) {
         )}
         {activeTab === 'logs' && (
           <RecognitionLogs token={token} apiBaseUrl={apiBaseUrl} />
+        )}
+        {activeTab === 'documentation' && (
+          <ApiDocumentation apiBaseUrl={apiBaseUrl} />
         )}
         {activeTab === 'admin' && user?.role === 'admin' && (
           <AdminDashboard token={token} apiBaseUrl={apiBaseUrl} />
