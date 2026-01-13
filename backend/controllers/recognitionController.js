@@ -7,7 +7,7 @@ const fs = require('fs');
 // Helper function to call Python service
 const callPythonService = (command, args) => {
   return new Promise((resolve, reject) => {
-    const pythonProcess = spawn('python', [
+    const pythonProcess = spawn('python3', [
       path.join(__dirname, '../face_recognition_service.py'),
       command,
       ...args
