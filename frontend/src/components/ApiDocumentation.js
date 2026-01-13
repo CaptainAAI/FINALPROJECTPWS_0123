@@ -46,13 +46,13 @@ function ApiDocumentation({ apiBaseUrl }) {
             'Content-Type': 'application/json'
           },
           body: {
-            username: 'string (required)',
+            email: 'string (required)',
             password: 'string (required)'
           },
           example: `curl -X POST ${apiBaseUrl}/api/auth/login \\
   -H "Content-Type: application/json" \\
   -d '{
-    "username": "johndoe",
+    "email": "john@example.com",
     "password": "securePassword123"
   }'`
         }
@@ -101,6 +101,28 @@ function ApiDocumentation({ apiBaseUrl }) {
           },
           example: `curl -X DELETE ${apiBaseUrl}/api/apikeys/1 \\
   -H "Authorization: Bearer YOUR_JWT_TOKEN"`
+        },
+        {
+          name: 'Revoke API Key',
+          method: 'PATCH',
+          path: '/api/apikeys/:keyId/revoke',
+          description: 'Revoke (deactivate) a specific API key',
+          headers: {
+            'Authorization': 'Bearer <JWT_TOKEN>'
+          },
+          example: `curl -X PATCH ${apiBaseUrl}/api/apikeys/1/revoke \\
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"`
+        },
+        {
+          name: 'Activate API Key',
+          method: 'PATCH',
+          path: '/api/apikeys/:keyId/activate',
+          description: 'Activate a previously revoked API key',
+          headers: {
+            'Authorization': 'Bearer <JWT_TOKEN>'
+          },
+          example: `curl -X PATCH ${apiBaseUrl}/api/apikeys/1/activate \\
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"`
         }
       ]
     },
@@ -116,11 +138,32 @@ function ApiDocumentation({ apiBaseUrl }) {
             'x-api-key': '<YOUR_API_KEY>'
           },
           body: {
-            image: 'file (required) - Image file to process'
+            image: 'file (required) - Image file to process',
+            threshold: 'number (optional, default: 0.6) - Minimum similarity threshold'
           },
           example: `curl -X POST ${apiBaseUrl}/api/recognition/detect \\
   -H "x-api-key: YOUR_API_KEY" \\
-  -F "image=@/path/to/image.jpg"`
+  -F "image=@/path/to/image.jpg" \\
+  -F "threshold=0.6"`
+        },
+        {
+          name: 'Verify Specific Face',
+          method: 'POST',
+          path: '/api/recognition/verify',
+          description: 'Verify if an image matches a specific registered face',
+          headers: {
+            'x-api-key': '<YOUR_API_KEY>'
+          },
+          body: {
+            image: 'file (required) - Image to verify',
+            faceId: 'number (required) - ID of the registered face to verify against',
+            threshold: 'number (optional, default: 0.6) - Minimum similarity threshold'
+          },
+          example: `curl -X POST ${apiBaseUrl}/api/recognition/verify \\
+  -H "x-api-key: YOUR_API_KEY" \\
+  -F "image=@/path/to/image.jpg" \\
+  -F "faceId=1" \\
+  -F "threshold=0.6"`
         },
         {
           name: 'Register Face',
@@ -220,6 +263,44 @@ function ApiDocumentation({ apiBaseUrl }) {
           },
           example: `curl -X PATCH ${apiBaseUrl}/api/faces/1/deactivate \\
   -H "Authorization: Bearer YOUR_JWT_TOKEN"`
+        },
+        {
+          name: 'Reactivate Face',
+          method: 'PATCH',
+          path: '/api/faces/:faceId/reactivate',
+          description: 'Reactivate a deactivated face',
+          headers: {
+            'Authorization': 'Bearer <JWT_TOKEN>'
+          },
+          example: `curl -X PATCH ${apiBaseUrl}/api/faces/1/reactivate \\
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"`
+        }
+      ]
+    },
+    {
+      category: 'Admin (Requires Admin Role)',
+      endpoints: [
+        {
+          name: 'Get All Users',
+          method: 'GET',
+          path: '/api/admin/users',
+          description: 'Get list of all users (Admin only)',
+          headers: {
+            'Authorization': 'Bearer <JWT_TOKEN>'
+          },
+          example: `curl -X GET ${apiBaseUrl}/api/admin/users \\
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"`
+        },
+        {
+          name: 'Get Admin Logs',
+          method: 'GET',
+          path: '/api/admin/logs',
+          description: 'Get all recognition logs from all users (Admin only)',
+          headers: {
+            'Authorization': 'Bearer <JWT_TOKEN>'
+          },
+          example: `curl -X GET ${apiBaseUrl}/api/admin/logs?limit=10&skip=0 \\
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"`
         }
       ]
     }
@@ -253,6 +334,29 @@ function ApiDocumentation({ apiBaseUrl }) {
             <li><strong>JWT Token:</strong> Used for user-specific operations. Obtain by logging in via <code>/api/auth/login</code></li>
             <li><strong>API Key:</strong> Used for public face recognition operations. Generate via <code>/api/apikeys/generate</code></li>
           </ul>
+        </div>
+
+        <div className="intro-section">
+          <h4>Complete 17-Step Testing Workflow</h4>
+          <ol>
+            <li><strong>User Registration:</strong> POST <code>/api/auth/register</code></li>
+            <li><strong>User Login:</strong> POST <code>/api/auth/login</code> → Get JWT token</li>
+            <li><strong>Verify Profile Access:</strong> GET <code>/api/auth/profile</code> with JWT</li>
+            <li><strong>Generate API Key:</strong> POST <code>/api/apikeys/generate</code> with JWT</li>
+            <li><strong>List API Keys:</strong> GET <code>/api/apikeys</code> with JWT</li>
+            <li><strong>Register First Face:</strong> POST <code>/api/recognition/register</code> with API key</li>
+            <li><strong>List Registered Faces:</strong> GET <code>/api/recognition/registered</code> with API key</li>
+            <li><strong>Detect & Identify Face:</strong> POST <code>/api/recognition/detect</code> with API key</li>
+            <li><strong>Test Unknown Face:</strong> POST <code>/api/recognition/detect</code> (negative test)</li>
+            <li><strong>Check Recognition Logs:</strong> GET <code>/api/recognition/logs</code> with JWT</li>
+            <li><strong>Check API Key Usage:</strong> GET <code>/api/apikeys</code> with JWT</li>
+            <li><strong>Revoke API Key:</strong> PATCH <code>/api/apikeys/:keyId/revoke</code> with JWT</li>
+            <li><strong>Test Revoked Key:</strong> POST <code>/api/recognition/detect</code> (should fail)</li>
+            <li><strong>Reactivate API Key:</strong> PATCH <code>/api/apikeys/:keyId/activate</code> with JWT</li>
+            <li><strong>Test Reactivated Key:</strong> POST <code>/api/recognition/detect</code> (should work)</li>
+            <li><strong>Admin Access Test:</strong> GET <code>/api/admin/users</code> with JWT (if admin)</li>
+            <li><strong>Delete API Key:</strong> DELETE <code>/api/apikeys/:keyId</code> with JWT</li>
+          </ol>
         </div>
 
         <div className="intro-section">
